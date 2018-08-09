@@ -1,0 +1,46 @@
+parameter_defaults:
+  ServiceNetMap:
+    ContrailDatabaseNetwork: internal_api
+    ContrailAnalyticsDatabaseNetwork: internal_api
+    ContrailConfigNetwork: internal_api
+    ContrailAnalyticsNetwork: internal_api
+    ContrailControlNetwork: tenant
+    ContrailWebuiNetwork: internal_api
+    ContrailVrouterNetwork: tenant
+  OvercloudControllerFlavor: control
+  OvercloudContrailControllerFlavor: contrail-controller
+  OvercloudComputeFlavor: compute
+  OvercloudContrailDpdkFlavor: compute-dpdk
+  OvercloudContrailSriovFlavor: compute-sriov
+  ControllerCount: 3
+  ContrailControllerCount: 3
+  ComputeCount: 2
+  ContrailDpdkCount: 0
+  ContrailSriovCount: 0
+  NeutronMetadataProxySharedSecret: secret
+# enable insecure registry
+  ContrailRegistryInsecure: true
+  DockerInsecureRegistryAddress: 192.168.24.1:8787
+  ContrailRegistry: 192.168.24.1:8787 
+# enable private secure registry
+#  ContrailRegistryCertUrl: http://satellite.englab.juniper.net/pub/satellite.englab.juniper.net.crt
+#  ContrailRegistry: 192.168.24.1:8787
+# set contrail image tag
+#  ContrailImageTag: queens-master-145-rhel-queens
+  ContrailImageTag: rhel-queens-5.0-173
+# enable 1 GB hugepages
+#  ContrailDpdkHugepages1GB: 10
+#  ContrailVrouterHugepages1GB: 10
+# contrail container configuration settings
+  ContrailSettings:
+    VROUTER_GATEWAY: 10.0.0.1
+  ContrailConfigDBMinDiskGB: 40
+  ContrailAnalyticsDBMinDiskGB: 40
+#    KEY1: value1
+#    KEY2: value2
+# SRIOV settings
+#  NovaPCIPassthrough:
+#    - devname: "ens2f1"
+#      physical_network: "sriov1"
+#  ContrailSriovNumVFs: ["ens2f1:7"]
+#  ContrailSriovHugepages1GB: 20
