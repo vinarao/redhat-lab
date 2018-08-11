@@ -167,5 +167,6 @@ echo "- imagename: docker.io/redis" >> ${output_file}
 echo "  push_destination: 192.168.24.1:8787" >> ${output_file}
 
 echo "Written ${output_file}"
+chmod 777 ${output_file1}
 echo "Upload with:"
-echo "openstack overcloud container image upload --config-file ${output_file}"
+echo "${output_file1}"
