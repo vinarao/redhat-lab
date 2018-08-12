@@ -1,0 +1,23 @@
+   qemu-img create -f qcow2 /var/lib/libvirt/images/osp-controller-1.qcow2 100G 
+   qemu-img create -f qcow2 /var/lib/libvirt/images/contrail-controller-1.qcow2 100G
+   qemu-img create -f qcow2 /var/lib/libvirt/images/osp-compute-1.qcow2 100G 
+   #qemu-img convert -f raw -O qcow2 /var/lib/libvirt/images/contrail-controller-1.qcow2 /var/lib/libvirt/images/contrail-controller-1.qcow2 
+   #qemu-img convert -f raw -O qcow2 /var/lib/libvirt/images/osp-compute-1.qcow2 /var/lib/libvirt/images/osp-compute-1.qcow2
+   virsh define contrail-controller-1.xml
+   virsh start contrail-controller-1
+   virsh define osp-controller-1.xml
+   virsh start  osp-controller-1
+   virsh define osp-compute-1.xml
+   virsh start osp-compute-1
+   sudo yum install -y python-virtualbmc
+   wget https://bootstrap.pypa.io/ez_setup.py -O - | python
+   vbmc add osp-controller-1  --port 16230 --address 0.0.0.0  --username root --password c0ntrail123 
+   vbmc add contrail-controller-1  --port 16231 --address 0.0.0.0  --username root --password c0ntrail123 
+   vbmc add osp-compute-1  --port 16232 --address 0.0.0.0  --username root --password c0ntrail123 
+   vbmc start  contrail-controller-1
+   vbmc start  osp-controller-1
+   vbmc start  osp-compute-1
+   yum -y install ipmitool
+   ipmitool -I lanplus -U root -P c0ntrail123 -H 127.0.0.1 -p 16230 power on 
+   ipmitool -I lanplus -U root -P c0ntrail123 -H 127.0.0.1 -p 16231 power on 
+   ipmitool -I lanplus -U root -P c0ntrail123 -H 127.0.0.1 -p 16232 power on

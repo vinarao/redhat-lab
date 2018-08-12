@@ -1,0 +1,3 @@
+52:54:00:0c:af:bf osp-controller-1 192.168.122.1 control 16230
+52:54:00:51:c0:48 osp-compute-1-at-5b3s30 192.168.122.1 compute 16232
+52:54:00:c9:56:1e contrail-controller-1-at-5b3s30 192.168.122.1 contrail-controller 16231

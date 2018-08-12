@@ -1,0 +1,16 @@
+<network>
+  <name>br0</name>
+  <forward mode='bridge'/>
+  <bridge name='br0'/>
+  <virtualport type='openvswitch'/>
+  <portgroup name='overcloud'>
+    <vlan trunk='yes'>
+      <tag id='700' nativeMode='untagged'/>
+      <tag id='710'/>
+      <tag id='720'/>
+      <tag id='730'/>
+      <tag id='740'/>
+      <tag id='750'/>
+    </vlan>
+  </portgroup>
+</network>

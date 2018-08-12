@@ -1,0 +1,42 @@
+    cat /etc/redhat-release 
+    subscription-manager register --username contrail.systems --password Embe1mpls_007 --force
+    subscription-manager list --available
+    subscription-manager attach --pool=8a85f98c61aca5bf0161ad8a8afc0e23
+    subscription-manager repos --enable=rhel-7-server-rpms --enable=rhel-7-server-extras-rpms --enable=rhel-7-server-rh-common-rpms --enable=rhel-ha-for-rhel-7-server-rpms --enable=rhel-7-server-openstack-13-rpms
+    yum install -y wget libguestfs  libguestfs-tools  openvswitch  virt-install  kvm libvirt  libvirt-python  python-virtinst
+    systemctl start libvirtd
+    systemctl start openvswitch
+    systemctl enable libvirtd
+    systemctl enable openvswitch
+    systemctl status openvswitch
+    mkdir images
+    modprobe -r kvm_intel
+    modprobe kvm_intel nested=1
+    cat /sys/module/kvm_intel/parameters/nested
+    cd images/
+    cp /rhel-server-7.5-update-1-x86_64-kvm.qcow2 . 
+    cloud_image=/labsetup/images/rhel-server-7.5-update-1-x86_64-kvm.qcow2
+    undercloud_name=queensa
+    undercloud_suffix=local
+    root_password=contrail123
+    stack_password=contrail123
+    export LIBGUESTFS_BACKEND=direct
+    qemu-img create -f qcow2 /var/lib/libvirt/images/${undercloud_name}.qcow2 100G
+    virt-resize --expand /dev/sda1 ${cloud_image} /var/lib/libvirt/images/${undercloud_name}.qcow2
+    virt-customize  -a /var/lib/libvirt/images/${undercloud_name}.qcow2   --run-command 'xfs_growfs /'   --root-password password:${root_password}   --hostname ${undercloud_name}.${undercloud_suffix}   --run-command 'useradd stack'   --password stack:password:${stack_password}   --run-command 'echo "stack ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/stack'   --chmod 0440:/etc/sudoers.d/stack   --run-command 'sed -i "s/PasswordAuthentication no/PasswordAuthentication yes/g" /etc/ssh/sshd_config'   --run-command 'systemctl enable sshd'   --run-command 'yum remove -y cloud-init'   --selinux-relabel
+    ovs-vsctl add-br br0
+    ovs-vsctl add-br br1
+    ovs-vsctl show
+    cd ..
+    virsh define undercloud.xml 
+    virsh start queensa
+    undercloud_name=queensa
+    undercloud_ip=`virsh domifaddr ${undercloud_name} |grep ipv4 |awk '{print $4}' |awk -F"/" '{print $1}'` 
+    ssh-copy-id $undercloud_ip
+    ssh-keygen -t rsa -C "your_email@example.com"
+    echo -e "\n\n\n" | ssh-keygen -t rsa
+    ssh-copy-id $undercloud_ip
+    scp tripleo-heat-templates-queens.tar.gz ${undercloud_ip}:/tmp/.
+    scp undercloud-prep ${undercloud_ip}:/root/.
+    scp ironic-list ${undercloud_ip}:/home/stack/.
+    ssh ${undercloud_ip}

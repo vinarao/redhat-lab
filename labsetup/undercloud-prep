@@ -1,0 +1,128 @@
+subscription-manager register --username contrail.systems --password Embe1mpls_007 --force
+subscription-manager list --available
+subscription-manager attach --pool=8a85f98c61aca5bf0161ad8a8afc0e23
+subscription-manager repos --enable=rhel-7-server-rpms --enable=rhel-7-server-extras-rpms --enable=rhel-7-server-rh-common-rpms --enable=rhel-ha-for-rhel-7-server-rpms --enable=rhel-7-server-openstack-13-rpms
+undercloud_name=`hostname -s`
+undercloud_suffix=`hostname -d`
+hostnamectl set-hostname ${undercloud_name}.${undercloud_suffix}
+hostnamectl set-hostname --transient ${undercloud_name}.${undercloud_suffix}
+satellite_fqdn=satellite.englab.juniper.net
+act_key=osp13
+org=Juniper
+yum localinstall -y http://${satellite_fqdn}/pub/katello-ca-consumer-latest.noarch.rpm
+subscription-manager register --activationkey=${act_key} --org=${org}
+yum install -y python-tripleoclient tmux
+su - stack
+cp /usr/share/instack-undercloud/undercloud.conf.sample ~/undercloud.conf
+openstack undercloud install
+source stackrc
+sudo iptables -A FORWARD -i br-ctlplane -o eth0 -j ACCEPT
+sudo iptables -A FORWARD -i eth0 -o br-ctlplane -m state --state RELATED,ESTABLISHED -j ACCEPT
+sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+undercloud_nameserver=8.8.8.8
+openstack subnet set `openstack subnet show ctlplane-subnet -c id -f value` --dns-nameserver ${undercloud_nameserver}
+sudo ip link add name vlan720 link br-ctlplane type vlan id 720
+sudo ip addr add 10.2.0.254/24 dev vlan720
+sudo ip link set dev vlan720 up
+sudo yum install -y rhosp-director-images rhosp-director-images-ipa
+mkdir /home/stack/images/
+cd /home/stack/images/
+for i in /usr/share/rhosp-director-images/overcloud-full-latest-13.0.tar /usr/share/rhosp-director-images/ironic-python-agent-latest-13.0.tar ; do tar -xvf $i; done
+cd
+openstack overcloud image upload --image-path /home/stack/images/
+cp ironic-list ironic_list
+ipmi_password=c0ntrail123
+ipmi_user=root
+while IFS= read -r line; do
+  mac=`echo $line|awk '{print $1}'`
+  name=`echo $line|awk '{print $2}'`
+  kvm_ip=`echo $line|awk '{print $3}'`
+  profile=`echo $line|awk '{print $4}'`
+  ipmi_port=`echo $line|awk '{print $5}'`
+  uuid=`openstack baremetal node create --driver ipmi \
+                                        --property cpus=4 \
+                                        --property memory_mb=16348 \
+                                        --property local_gb=100 \
+                                        --property cpu_arch=x86_64 \
+                                        --driver-info ipmi_username=${ipmi_user}  \
+                                        --driver-info ipmi_address=${kvm_ip} \
+                                        --driver-info ipmi_password=${ipmi_password} \
+                                        --driver-info ipmi_port=${ipmi_port} \
+                                        --name=${name} \
+                                        --property capabilities=profile:${profile},boot_option:local \
+                                        -c uuid -f value`
+#  openstack baremetal port create --node ${uuid} ${mac}
+done < <(cat ironic_list)
+
+DEPLOY_KERNEL=$(openstack image show bm-deploy-kernel -f value -c id)
+DEPLOY_RAMDISK=$(openstack image show bm-deploy-ramdisk -f value -c id)
+
+for i in `openstack baremetal node list -c UUID -f value`; do
+  openstack baremetal node set $i --driver-info deploy_kernel=$DEPLOY_KERNEL --driver-info deploy_ramdisk=$DEPLOY_RAMDISK
+done
+
+for i in `openstack baremetal node list -c UUID -f value`; do
+  openstack baremetal node show $i -c properties -f value
+done
+
+
+
+for node in $(openstack baremetal node list -c UUID -f value) ; do
+  openstack baremetal node manage $node
+done
+for i in `openstack baremetal node list -c UUID -f value`; do  ironic node-set-provision-state $i manage ; done;
+openstack overcloud node introspect --all-manageable --provide
+
+
+
+
+
+
+
+for i in compute-dpdk \
+compute-sriov \
+contrail-controller \
+contrail-analytics \
+contrail-database \
+contrail-analytics-database; do
+  openstack flavor create $i --ram 4096 --vcpus 1 --disk 40
+  openstack flavor set --property "capabilities:boot_option"="local" \
+                       --property "capabilities:profile"="${i}" ${i}
+done
+
+
+
+
+
+
+newgrp docker
+exit
+su - stack
+source stackrc
+
+
+
+openstack overcloud container image prepare \
+ --push-destination=192.168.24.1:8787  \
+ --tag-from-label {version}-{release} \
+ --output-images-file ~/local_registry_images.yaml  \
+ --namespace=registry.access.redhat.com/rhosp13  \
+ --prefix=openstack-  \
+ --tag-from-label {version}-{release}  \
+ --output-env-file ~/overcloud_images.yaml
+
+
+
+
+
+
+openstack overcloud container image upload --config-file ~/local_registry_images.yaml
+
+git clone https://github.com/vinarao/redhat-lab
+
+cd redhat-lab/templates
+/import_contrail_container.sh -f /tmp/contrail_container -r hub.juniper.net/contrail-nightly -u JNPR-FieldUser3 -p E6Ti-V_GhU0yH#umLanQ -t rhel-queens-5.0-161
+
+/tmp/test
+
+tar -xvf /tmp/tripleo-heat-templates-queens.tar.gz -C /home/stack/
