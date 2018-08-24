@@ -14,6 +14,7 @@
     modprobe kvm_intel nested=1
     cat /sys/module/kvm_intel/parameters/nested
     cd images/
+    wget https://s3.amazonaws.com/redhat-lab-image/rhel-server-7.5-update-1-x86_64-kvm.qcow2
     cp /rhel-server-7.5-update-1-x86_64-kvm.qcow2 . 
     cloud_image=/labsetup/images/rhel-server-7.5-update-1-x86_64-kvm.qcow2
     undercloud_name=queensa
