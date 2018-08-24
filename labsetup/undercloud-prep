@@ -120,8 +120,9 @@ openstack overcloud container image upload --config-file ~/local_registry_images
 
 git clone https://github.com/vinarao/redhat-lab
 
+echo "For the next step reach out to contrail-registry@juniper.net for registry_username and registry_Password"
 cd redhat-lab/templates
-/import_contrail_container.sh -f /tmp/contrail_container -r hub.juniper.net/contrail-nightly -u JNPR-FieldUser3 -p E6Ti-V_GhU0yH#umLanQ -t rhel-queens-5.0-161
+/import_contrail_container.sh -f /tmp/contrail_container -r hub.juniper.net/contrail-nightly -u <registry_username> -p <registry_password> -t rhel-queens-5.0-161
 
 /tmp/test
 
